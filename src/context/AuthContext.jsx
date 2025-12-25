@@ -22,7 +22,7 @@ export const useAuth = () => {
 // Auth Provider Component
 export const AuthProvider = ({ children }) => {
     const [currentUser, setCurrentUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true);  // This is crucial for initial auth check
     const [error, setError] = useState(null);
 
     // Sign in with Google
@@ -88,8 +88,8 @@ export const AuthProvider = ({ children }) => {
     // Monitor auth state changes
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-            setCurrentUser(user || null); // ensure null if logged out
-            setLoading(false);
+            setCurrentUser(user || null);
+            setLoading(false);  // Loading ends here — very important
         });
 
         return unsubscribe;
@@ -103,9 +103,18 @@ export const AuthProvider = ({ children }) => {
         logout
     };
 
+    // Critical fix: Only render children when initial loading is complete
+    // This prevents routes from redirecting to login during the brief moment when currentUser is still null
     return (
         <AuthContext.Provider value={value}>
-            {!loading && children}
+            {loading ? (
+                // Simple full-screen loader while Firebase checks auth state
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                </div>
+            ) : (
+                children
+            )}
         </AuthContext.Provider>
     );
 };
